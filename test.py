@@ -63,19 +63,20 @@ class SQLite(Parser):
         yield UInt32(self, 'VersionValidFor')
         yield UInt32(self, 'SqliteVersion')
 
-def createFile():
+def createFile(numEntries):
     conn = sqlite3.connect(DATA_FILE)
 
     c = conn.cursor()
 
     # Create table
     c.execute('''create table stocks
-    (date text, trans text, symbol text,
+    (x real, date text, trans text, symbol text,
      qty real, price real)''')
 
     # Insert a row of data
-    c.execute("""insert into stocks
-              values ('2006-01-05','BUY','RHAT',100,35.14)""")
+    for i in range(numEntries):
+        c.execute("""insert into stocks
+                  values (%d,'2006-01-05','BUY','RHAT',100,35.14)""" % i)
 
     # Save (commit) the changes
     conn.commit()
@@ -83,9 +84,9 @@ def createFile():
     # We can also close the cursor if we are done with it
     c.close()
 
-def main():
-    if not os.path.exists(DATA_FILE):
-        createFile()
+def main(argv):
+    os.unlink(DATA_FILE)
+    createFile(int(argv[0]))
     stream = StringInputStream(open(DATA_FILE).read(100))
     root = SQLite(stream)
     for field in root:
@@ -95,7 +96,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    from sys import argv
+    main(argv[1:])
 
 
 # vim: set tabstop=8 softtabstop=4 shiftwidth=4 expandtab:
